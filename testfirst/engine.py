@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 import json
 
-from .challenges import Challenge, LARGEST, TraceStep
+from .challenges import Challenge, LARGEST
 
 
 class Outcome(Enum):
@@ -20,19 +20,31 @@ class Attempt:
     message: str
     expected: int | None = None
     actual: int | None = None
-    trace: tuple[TraceStep, ...] = ()
+    trace: tuple[str, ...] = ()
 
 
-def parse_attempt(input_text: str, prediction_text: str) -> tuple[list[int], int]:
+def parse_numbers(input_text: str, challenge: Challenge = LARGEST) -> list[int]:
     try:
         numbers = json.loads(input_text)
-        prediction = json.loads(prediction_text)
     except (ValueError, RecursionError) as error:
-        raise ValueError("Use valid JSON for the list and the predicted integer.") from error
+        raise ValueError("Use valid JSON for the list.") from error
     if type(numbers) is not list or not 1 <= len(numbers) <= 8:
         raise ValueError("Enter a JSON list containing between 1 and 8 integers.")
     if any(type(number) is not int or not -20 <= number <= 20 for number in numbers):
         raise ValueError("Every list item must be an integer between -20 and 20; no booleans or floats.")
+    if len(set(numbers)) < challenge.min_distinct:
+        raise ValueError(f"Include at least {challenge.min_distinct} distinct integers.")
+    return numbers
+
+
+def parse_attempt(
+    input_text: str, prediction_text: str, challenge: Challenge = LARGEST,
+) -> tuple[list[int], int]:
+    numbers = parse_numbers(input_text, challenge)
+    try:
+        prediction = json.loads(prediction_text)
+    except (ValueError, RecursionError) as error:
+        raise ValueError("Use a valid JSON integer for the prediction.") from error
     if type(prediction) is not int:
         raise ValueError("The predicted output must be a JSON integer; no booleans or floats.")
     return numbers, prediction
@@ -55,7 +67,7 @@ class Game:
 
     def evaluate(self, input_text: str, prediction_text: str) -> Attempt:
         try:
-            numbers, prediction = parse_attempt(input_text, prediction_text)
+            numbers, prediction = parse_attempt(input_text, prediction_text, self.challenge)
         except ValueError as error:
             return Attempt(Outcome.INVALID_INPUT, str(error))
         expected = self.challenge.reference(numbers)

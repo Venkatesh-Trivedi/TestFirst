@@ -1,6 +1,6 @@
 # TestFirst
 
-A first terminal prototype of a beginner programming game. Invent a list that
+A terminal prototype of a beginner programming game. Invent a list that
 exposes a bug, predict the correct output, then inspect what the buggy program did.
 No learning outcomes or user testing have been measured.
 
@@ -19,23 +19,38 @@ python -m unittest discover -s tests -v
 
 ## Playing
 
-The first challenge is **Find the largest number**. Read its specification and
-buggy function, enter a JSON list such as `[2, 5, 1]`, then enter your predicted
-correct output as a JSON integer, such as `5`.
+Choose a challenge from the numbered menu:
+
+| Choice | Challenge | Specification |
+| --- | --- | --- |
+| 1 | Find the largest number | Return the largest integer in a non-empty list. |
+| 2 | Second-largest DISTINCT number | Return the second-largest unique value, ignoring duplicates. Requires at least two distinct integers. |
+| 3 | Most-frequent number | Return the most frequent integer; among equally frequent values, return the smallest. |
+
+Read the specification and buggy function, enter a JSON list such as `[2, 5, 1]`,
+then enter your predicted correct output as a JSON integer. For this list, the
+predictions for choices 1, 2, and 3 would be `5`, `2`, and `1`, respectively.
 
 Lists must contain 1 through 8 integers, each between -20 and 20 inclusive.
 Booleans, floats, non-list values, and malformed JSON are rejected. Predictions
 must be JSON integers; an integer outside the list's allowed range is accepted
-as an incorrect prediction.
+as an incorrect prediction. The list is validated before you are asked for a
+prediction; invalid lists return directly to the list prompt. For choice 2,
+lists with fewer than two distinct values are also rejected.
 
 The game distinguishes invalid input, incorrect prediction, correct prediction
-without exposing the bug, and success. Success displays expected and actual
-outputs, the initial `best`, every loop comparison and update decision, and an
-explanation. Try another list after any outcome.
+without exposing the bug, and success. Success announces **Challenge complete.**,
+then displays expected and actual outputs, an execution trace, and an explanation.
+The largest-number trace shows the initial `best` and every comparison/update;
+second-largest shows the sorted list and selected position; most-frequent shows
+count updates, dictionary key order, and the tie-selection rule. All traces end
+with the actual return value. Try another list after any outcome.
 
 At the **list prompt**, enter `hint` for the next of three optional hints,
-`restart` to redisplay the challenge and reset the hint count, or `quit` to exit.
-Retrying preserves the hint count. EOF or Ctrl+C exits cleanly at either prompt.
+`restart` to redisplay the challenge and reset its hint count, `menu` to choose
+another challenge, or `quit` to exit. Each challenge has its own three hints.
+Retrying and switching away/back preserve that challenge's hint count; restart
+only resets the selected challenge. EOF or Ctrl+C exits cleanly at any prompt.
 Commands are only recognized at the list prompt; the prediction prompt accepts
 a JSON integer. Hints never appear automatically.
 
@@ -48,10 +63,13 @@ a JSON integer. Hints never appear automatically.
 - `ENGINEERING_JOURNAL.md`: decisions, actual validation, and limitations.
 
 To add another integer-list challenge, define trusted callables and a `Challenge`
-in `challenges.py`, pass it to `Game(challenge=...)`, and select it in the terminal
-entry point. The current validation rules and `best`/`number` trace display suit
-this first challenge; different input shapes or algorithms will need corresponding
-validation and display changes. There is no dynamic code loading or plugin system.
+in `challenges.py` and add it to the `CHALLENGES` tuple. The menu uses that tuple.
+Each trace is a tuple of explanatory text steps displayed by the same UI loop;
+there is no algorithm-specific rendering in the terminal. `min_distinct` adds
+the distinct-value requirement to shared validation and displayed input rules.
+Different input shapes will still need validation changes. There is no dynamic
+code loading or plugin system. The separate tracers must stay aligned with their
+trusted functions; tests check intermediate steps and return values.
 
 Progress and hints live only in memory. There are no accounts, storage, scores,
 AI services, or web interface. Player text is parsed with `json.loads` and is

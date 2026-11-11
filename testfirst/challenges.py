@@ -13,23 +13,70 @@ def largest(numbers):
     return best
 
 
-@dataclass(frozen=True)
-class TraceStep:
-    number: int | None
-    best_before: int
-    best_after: int
-    updated: bool
-
-
-def trace_largest(numbers: list[int]) -> tuple[TraceStep, ...]:
+def trace_largest(numbers: list[int]) -> tuple[str, ...]:
     best = 0
-    steps = [TraceStep(None, best, best, False)]
-    for number in numbers:
+    steps = ["Initial: best = 0 (before the loop)"]
+    for index, number in enumerate(numbers, 1):
         before = best
         updated = number > best
         if updated:
             best = number
-        steps.append(TraceStep(number, before, best, updated))
+        decision = "update" if updated else "no update"
+        steps.append(
+            f"Iteration {index}: number = {number}; {number} > {before} is {updated}; "
+            f"{decision}; best: {before} -> {best}"
+        )
+    steps.append(f"Return: {best}")
+    return tuple(steps)
+
+
+def second_largest(numbers):
+    ordered = sorted(numbers)
+    return ordered[-2]
+
+
+def reference_second_largest(numbers):
+    return sorted(set(numbers))[-2]
+
+
+def trace_second_largest(numbers: list[int]) -> tuple[str, ...]:
+    ordered = sorted(numbers)
+    return (
+        f"Initial: numbers = {numbers}",
+        f"Sort ascending (duplicates retained): ordered = {ordered}",
+        f"Select ordered[-2] at index {len(ordered) - 2}: {ordered[-2]}",
+        f"Return: {ordered[-2]}",
+    )
+
+
+def most_frequent(numbers):
+    counts = {}
+    for number in numbers:
+        counts[number] = counts.get(number, 0) + 1
+    return max(counts, key=counts.get)
+
+
+def reference_most_frequent(numbers):
+    return min(set(numbers), key=lambda number: (-numbers.count(number), number))
+
+
+def trace_most_frequent(numbers: list[int]) -> tuple[str, ...]:
+    counts = {}
+    steps = ["Initial: counts = {}"]
+    for index, number in enumerate(numbers, 1):
+        before = counts.get(number, 0)
+        counts[number] = before + 1
+        steps.append(
+            f"Iteration {index}: number = {number}; count: {before} -> {counts[number]}; "
+            f"counts = {counts}"
+        )
+    winner = max(counts, key=counts.get)
+    steps.append(
+        f"Select max(counts, key=counts.get): key order = {list(counts)}; "
+        f"highest count = {counts[winner]}; first key with that count = {winner} "
+        "(ties keep the first encountered key)"
+    )
+    steps.append(f"Return: {winner}")
     return tuple(steps)
 
 
@@ -39,9 +86,17 @@ class Challenge:
     specification: str
     buggy: Callable[[list[int]], int]
     reference: Callable[[list[int]], int]
-    trace: Callable[[list[int]], tuple[TraceStep, ...]]
+    trace: Callable[[list[int]], tuple[str, ...]]
     hints: tuple[str, ...]
     explanation: str
+    min_distinct: int = 1
+
+    @property
+    def input_rules(self) -> str:
+        rules = "Enter a JSON list of 1-8 integers, each from -20 to 20."
+        if self.min_distinct > 1:
+            rules += f" Include at least {self.min_distinct} distinct values."
+        return rules
 
     @property
     def source(self) -> str:
@@ -65,3 +120,48 @@ LARGEST = Challenge(
         "from the first list element, or use max(numbers)."
     ),
 )
+
+SECOND_LARGEST = Challenge(
+    title="Second-largest DISTINCT number",
+    specification=(
+        "Return the second-largest distinct integer in the list. Duplicate values "
+        "count only once. The list must contain at least two distinct integers."
+    ),
+    buggy=second_largest,
+    reference=reference_second_largest,
+    trace=trace_second_largest,
+    hints=(
+        "Does the second position always represent the second distinct value?",
+        "Sorting preserves duplicate values. Consider repeated large numbers.",
+        "Try [1, 3, 3]. The second-largest distinct value is 1, not 3.",
+    ),
+    explanation=(
+        "Sorting keeps duplicates. If the largest value occurs more than once, "
+        "ordered[-2] is still the largest value. Remove duplicates before sorting: "
+        "sorted(set(numbers))[-2]."
+    ),
+    min_distinct=2,
+)
+
+MOST_FREQUENT = Challenge(
+    title="Most-frequent number",
+    specification=(
+        "Return the integer that occurs most often in a non-empty list. "
+        "If several values share the highest frequency, return the smallest value."
+    ),
+    buggy=most_frequent,
+    reference=reference_most_frequent,
+    trace=trace_most_frequent,
+    hints=(
+        "What does the specification require when frequencies are equal?",
+        "Dictionary keys follow first appearance. max keeps the first key on a tie.",
+        "Try [2, 1]. Both occur once, so the correct answer is 1, even though 2 appears first.",
+    ),
+    explanation=(
+        "The counts are correct, but max(counts, key=counts.get) keeps the first "
+        "encountered key on a frequency tie. The specification requires the smallest "
+        "tied value. Compare frequency first and then prefer the smaller number."
+    ),
+)
+
+CHALLENGES = (LARGEST, SECOND_LARGEST, MOST_FREQUENT)

@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock
 from dataclasses import replace
 
-from testfirst.challenges import LARGEST, TraceStep, largest, trace_largest
+from testfirst.challenges import LARGEST, largest, trace_largest
 from testfirst.engine import Game, Outcome
 
 
@@ -80,34 +80,36 @@ class EvaluationTests(unittest.TestCase):
 class TraceTests(unittest.TestCase):
     def test_all_negative_trace(self):
         self.assertEqual(trace_largest([-5, -2]), (
-            TraceStep(None, 0, 0, False),
-            TraceStep(-5, 0, 0, False),
-            TraceStep(-2, 0, 0, False),
+            "Initial: best = 0 (before the loop)",
+            "Iteration 1: number = -5; -5 > 0 is False; no update; best: 0 -> 0",
+            "Iteration 2: number = -2; -2 > 0 is False; no update; best: 0 -> 0",
+            "Return: 0",
         ))
 
     def test_updates_equal_values_and_no_updates(self):
-        self.assertEqual(trace_largest([-2, 0, 3, 3, 2, 5]), (
-            TraceStep(None, 0, 0, False),
-            TraceStep(-2, 0, 0, False),
-            TraceStep(0, 0, 0, False),
-            TraceStep(3, 0, 3, True),
-            TraceStep(3, 3, 3, False),
-            TraceStep(2, 3, 3, False),
-            TraceStep(5, 3, 5, True),
-        ))
+        steps = trace_largest([-2, 0, 3, 3, 2, 5])
+        self.assertEqual(steps[2], "Iteration 2: number = 0; 0 > 0 is False; no update; best: 0 -> 0")
+        self.assertEqual(steps[3], "Iteration 3: number = 3; 3 > 0 is True; update; best: 0 -> 3")
+        self.assertEqual(steps[4], "Iteration 4: number = 3; 3 > 3 is False; no update; best: 3 -> 3")
+        self.assertEqual(steps[5], "Iteration 5: number = 2; 2 > 3 is False; no update; best: 3 -> 3")
+        self.assertEqual(steps[6], "Iteration 6: number = 5; 5 > 3 is True; update; best: 3 -> 5")
 
     def test_trace_matches_trusted_function_for_all_short_lists(self):
         for length in range(1, 4):
             for values in product(range(-20, 21), repeat=length):
                 steps = trace_largest(list(values))
-                self.assertEqual(len(steps), length + 1)
-                self.assertEqual(steps[0], TraceStep(None, 0, 0, False))
-                for previous, step, number in zip(steps, steps[1:], values):
-                    self.assertEqual(step.number, number)
-                    self.assertEqual(step.best_before, previous.best_after)
-                    self.assertEqual(step.updated, number > step.best_before)
-                    self.assertEqual(step.best_after, number if step.updated else step.best_before)
-                self.assertEqual(steps[-1].best_after, largest(values))
+                self.assertEqual(len(steps), length + 2)
+                self.assertEqual(steps[0], "Initial: best = 0 (before the loop)")
+                for index, number in enumerate(values, 1):
+                    before = largest(values[:index - 1])
+                    after = largest(values[:index])
+                    updated = number > before
+                    decision = "update" if updated else "no update"
+                    self.assertEqual(steps[index], (
+                        f"Iteration {index}: number = {number}; {number} > {before} is {updated}; "
+                        f"{decision}; best: {before} -> {after}"
+                    ))
+                self.assertEqual(steps[-1], f"Return: {largest(values)}")
 
 
 if __name__ == "__main__":
