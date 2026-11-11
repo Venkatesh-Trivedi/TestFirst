@@ -74,7 +74,7 @@ def main() -> None:
             except ValueError as error:
                 print(f"Invalid input: {error}")
                 continue
-            prediction = input("Predicted correct output (JSON integer): ")
+            prediction = input("Predicted correct output (one number, no decimals): ")
             result = game.evaluate(text, prediction)
             if result.outcome is Outcome.INVALID_INPUT:
                 print(f"Invalid input: {result.message}")

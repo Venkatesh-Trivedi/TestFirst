@@ -91,6 +91,7 @@ class BrowserAPITests(unittest.TestCase):
         self.act("select", challenge=1)
         state = self.act("submit", numbers="[2,2]", prediction="2")
         self.assertEqual(state["result"]["outcome"], "invalid_input")
+        self.assertEqual(state["result"]["message"], "Include at least 2 different numbers.")
         for index in (1, 2):
             state = self.solve(index)
             self.assertEqual(state["result"]["outcome"], "success")

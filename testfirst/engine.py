@@ -27,13 +27,13 @@ def parse_numbers(input_text: str, challenge: Challenge = LARGEST) -> list[int]:
     try:
         numbers = json.loads(input_text)
     except (ValueError, RecursionError) as error:
-        raise ValueError("Use valid JSON for the list.") from error
+        raise ValueError("Use square brackets and separate numbers with commas, like [1, 2, 3].") from error
     if type(numbers) is not list or not 1 <= len(numbers) <= 8:
-        raise ValueError("Enter a JSON list containing between 1 and 8 integers.")
+        raise ValueError("Enter 1–8 numbers in square brackets, like [1, 2, 3].")
     if any(type(number) is not int or not -20 <= number <= 20 for number in numbers):
-        raise ValueError("Every list item must be an integer between -20 and 20; no booleans or floats.")
+        raise ValueError("Each number must be between -20 and 20, with no decimals. Use only numbers.")
     if len(set(numbers)) < challenge.min_distinct:
-        raise ValueError(f"Include at least {challenge.min_distinct} distinct integers.")
+        raise ValueError(f"Include at least {challenge.min_distinct} different numbers.")
     return numbers
 
 
@@ -44,9 +44,9 @@ def parse_attempt(
     try:
         prediction = json.loads(prediction_text)
     except (ValueError, RecursionError) as error:
-        raise ValueError("Use a valid JSON integer for the prediction.") from error
+        raise ValueError("Enter one number without decimals, like 3 or -2.") from error
     if type(prediction) is not int:
-        raise ValueError("The predicted output must be a JSON integer; no booleans or floats.")
+        raise ValueError("Enter one number without decimals, like 3 or -2.")
     return numbers, prediction
 
 

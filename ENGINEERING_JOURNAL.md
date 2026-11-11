@@ -405,3 +405,54 @@ update, and prepared the requested commit/push. No additional feature or
 dependency was introduced. No new human user study was conducted; assistive
 technologies, other browsers, and operating systems were not tested. Existing
 in-memory session limitations remain.
+
+## 2026-11-11 — beginner-friendly instructions and validation copy
+
+Reviewed learner-facing text in HTML, challenge input rules, shared parsing
+errors, terminal prompts, and test assertions before editing. Changed the hero
+heading to `Can you prove this code wrong?` and the input label to `Your numbers`.
+The prediction placeholder now gives `3 or -2` as examples.
+
+`Challenge.input_rules` now explains 1–8 numbers, square brackets and commas,
+the [-20, 20] range, and no decimals using the supplied wording. The second
+challenge's additional constraint and matching error say `different numbers`;
+its specification's minimum-values sentence uses the same wording.
+
+Shared `engine.py` messages now explain malformed lists with the supplied
+square-bracket/comma example, prediction-format errors with the supplied
+single-number example, and other length/type/range errors without JSON,
+boolean, float, or integer jargon. The terminal prediction prompt also says
+one number/no decimals. These are string changes only: `json.loads`, validation
+conditions, exact Python type checks, bounds, accepted inputs, trusted challenge
+functions, result ordering, and session behavior are unchanged. Developer docs,
+internal JSON names, serialization, and HTTP API content types remain intact.
+
+Validation actually performed:
+
+- Added explicit shared-copy assertions covering normal constraints, the extra
+  different-number constraint, malformed lists, and prediction format/type
+  failures. Added the new different-number error assertion to an existing API
+  test. Existing invalid-input and boundary tests continue to cover booleans,
+  decimals, malformed JSON, type/length/range limits, and accepted integer inputs.
+- Ran `python -m unittest discover -s tests -v` with loopback access enabled:
+  **all 41 tests passed in 1.557 seconds** on Python 3.13.0.
+- `git diff --check` passed with normal Windows line-ending notices. Reviewed
+  remaining JSON references: the application uses them for serialization and
+  API protocol errors, not the ordinary learner input labels or format errors.
+- Started an isolated browser preview at `127.0.0.1:8001` so importing the changed
+  Python strings would not erase the open port-8000 practice session. The normal
+  documented launch command and its default port remain unchanged.
+- In the browser, checked the new menu heading, CTA selection, Your numbers
+  label, normal constraints, and prediction placeholder. Submitted `1, 2, 3`
+  and observed the exact malformed-list guidance with both fields preserved.
+  Submitted `[1,2,3]` with prediction `3.0` and observed the exact prediction
+  guidance; changing prediction to `3` produced the usual correct/no-bug result.
+  On challenge two, `[2,2]` produced `Include at least 2 different numbers.`;
+  `[1.5,2]` produced the new number/range/no-decimals message. Saved a screenshot
+  of the error state and stopped the isolated preview after verification.
+
+Codex performed all copy edits, assertion updates, test and browser checks, and
+this journal update, and prepared the requested commit/push. No new human learner
+study was conducted; other browsers and assistive technologies were not tested.
+An already-running server must be restarted to import the updated Python copy;
+the existing process-local progress-reset limitation still applies on restart.

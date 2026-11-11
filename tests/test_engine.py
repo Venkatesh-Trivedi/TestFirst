@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock
 from dataclasses import replace
 
-from testfirst.challenges import LARGEST, largest, trace_largest
+from testfirst.challenges import LARGEST, SECOND_LARGEST, largest, trace_largest
 from testfirst.engine import Game, Outcome
 
 
@@ -54,6 +54,21 @@ class EvaluationTests(unittest.TestCase):
         for prediction in ("", "x", "true", "false", "1.0", "1e0", "null", "[]", "{}", '"1"', "NaN", "1 2"):
             with self.subTest(prediction=prediction):
                 self.assertEqual(Game().evaluate("[1]", prediction).outcome, Outcome.INVALID_INPUT)
+
+    def test_beginner_friendly_constraints_and_errors(self):
+        self.assertEqual(LARGEST.input_rules, (
+            "Enter 1–8 numbers in square brackets, like [1, 2, 3]. "
+            "Each number must be between -20 and 20, with no decimals."
+        ))
+        self.assertEqual(SECOND_LARGEST.input_rules, LARGEST.input_rules + " Include at least 2 different numbers.")
+        for numbers in ("", "[1,]", "1, 2", "not a list"):
+            self.assertEqual(Game().evaluate(numbers, "1").message,
+                             "Use square brackets and separate numbers with commas, like [1, 2, 3].")
+        for prediction in ("bad", "3.0", "true", '"3"', "[3]"):
+            self.assertEqual(Game().evaluate("[1, 3]", prediction).message,
+                             "Enter one number without decimals, like 3 or -2.")
+        self.assertEqual(Game(SECOND_LARGEST).evaluate("[2,2]", "2").message,
+                         "Include at least 2 different numbers.")
 
     def test_oversized_integer_is_invalid(self):
         self.assertEqual(Game().evaluate("[" + "9" * 10000 + "]", "0").outcome, Outcome.INVALID_INPUT)

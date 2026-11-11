@@ -19,7 +19,7 @@
     <nav id="navigation" aria-label="Challenges"></nav>
     <div id="notice" role="status" aria-live="polite" aria-atomic="true">Loading your challenges…</div>
     <section id="menu" hidden aria-labelledby="menu-title">
-      <div class="intro"><h1 id="menu-title" tabindex="-1">Find the counterexample.</h1>
+      <div class="intro"><h1 id="menu-title" tabindex="-1">Can you prove this code wrong?</h1>
       <p>Invent an input that exposes a bug, predict the correct output, then learn why the program fails.</p>
       <button id="first-challenge" class="primary">Try your first challenge</button></div>
       <ol class="steps" aria-label="How to play">
@@ -43,10 +43,10 @@
           <h2 id="attempt-title">Build your test</h2>
           <p id="constraints" class="constraints"></p>
           <form id="attempt-form" novalidate>
-            <label for="numbers">Your input list <span class="muted">JSON</span></label>
+            <label for="numbers">Your numbers</label>
             <input id="numbers" name="numbers" placeholder="e.g. [1, 2, 3]" autocomplete="off" spellcheck="false" aria-describedby="constraints feedback-message" aria-required="true">
             <label for="prediction">Predicted correct output</label>
-            <input id="prediction" name="prediction" placeholder="An integer" autocomplete="off" spellcheck="false" aria-describedby="prediction-help feedback-message" aria-required="true">
+            <input id="prediction" name="prediction" placeholder="e.g. 3 or -2" autocomplete="off" spellcheck="false" aria-describedby="prediction-help feedback-message" aria-required="true">
             <p id="prediction-help" class="muted">Predict what the specification requires, even if the code disagrees.</p>
             <div class="actions"><button class="primary" type="submit">Test my prediction</button><button type="button" id="restart">Restart</button></div>
           </form>

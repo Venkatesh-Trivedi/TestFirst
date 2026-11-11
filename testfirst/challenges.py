@@ -93,9 +93,12 @@ class Challenge:
 
     @property
     def input_rules(self) -> str:
-        rules = "Enter a JSON list of 1-8 integers, each from -20 to 20."
+        rules = (
+            "Enter 1–8 numbers in square brackets, like [1, 2, 3]. "
+            "Each number must be between -20 and 20, with no decimals."
+        )
         if self.min_distinct > 1:
-            rules += f" Include at least {self.min_distinct} distinct values."
+            rules += f" Include at least {self.min_distinct} different numbers."
         return rules
 
     @property
@@ -125,7 +128,7 @@ SECOND_LARGEST = Challenge(
     title="Second-largest DISTINCT number",
     specification=(
         "Return the second-largest distinct integer in the list. Duplicate values "
-        "count only once. The list must contain at least two distinct integers."
+        "count only once. The list must contain at least two different numbers."
     ),
     buggy=second_largest,
     reference=reference_second_largest,
