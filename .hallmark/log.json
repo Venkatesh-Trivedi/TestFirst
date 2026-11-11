@@ -1,0 +1,15 @@
+[
+ {
+  "scope": "app",
+  "theme": "console",
+  "shape": "app screen",
+  "axes": "dark/grotesk-sans/chromatic-amber",
+  "nav": "three challenge buttons",
+  "signature": "Python prediction and execution trace",
+  "entry": "testfirst/static/index.html",
+  "prompt": "TestFirst local browser prototype",
+  "waived": [],
+  "date": "2026-11-11",
+  "mode": "build"
+ }
+]

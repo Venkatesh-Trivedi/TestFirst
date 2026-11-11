@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TestFirst: Find the counterexample</title>
+  <meta name="description" content="Practice reading Python, predicting correct outputs, and finding inputs that expose bugs in three small programming challenges.">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to practice</a>
+  <header class="topbar">
+    <a class="wordmark" href="/">TestFirst<span class="brand-dot" aria-hidden="true">.</span></a>
+    <span class="tagline">A small input. A revealing result.</span>
+    <span id="progress">Your practice session</span>
+  </header>
+  <main id="main" tabindex="-1">
+    <nav id="navigation" aria-label="Challenges"></nav>
+    <div id="notice" role="status" aria-live="polite" aria-atomic="true">Loading your challenges…</div>
+    <section id="menu" hidden aria-labelledby="menu-title">
+      <div class="intro"><h1 id="menu-title" tabindex="-1">Find the counterexample.</h1>
+      <p>Read the promise. Test the program. Find an input that proves they disagree.</p></div>
+      <div class="goal"><h2>You write the test, not the code.</h2>
+      <p>Choose a list, then predict the answer the specification requires. Your goal is a correct prediction that the program gets wrong.</p>
+      <p>For example, <code>[1, 2, 3]</code> is a valid list. The largest value is <code>3</code>. A valid test can also leave a bug hidden.</p></div>
+      <div id="challenge-list"></div>
+    </section>
+    <section id="practice" hidden aria-labelledby="challenge-title">
+      <div class="section-heading"><div><p id="position" class="muted"></p><h1 id="challenge-title" tabindex="-1"></h1></div><button id="back-menu">Challenge menu</button></div>
+      <div class="workbench">
+        <section class="program" aria-labelledby="spec-title">
+          <h2 id="spec-title">The specification</h2><p id="specification"></p>
+          <div class="code-heading"><h2>The program</h2><span class="muted">Python · contains a bug</span></div>
+          <pre tabindex="0" aria-label="Buggy Python function"><code id="source"></code></pre>
+          <p class="muted">Read the code as it is. Choose a test that shows where it breaks its promise.</p>
+        </section>
+        <section class="attempt" aria-labelledby="attempt-title">
+          <h2 id="attempt-title">Build your test</h2>
+          <p id="constraints" class="constraints"></p>
+          <form id="attempt-form" novalidate>
+            <label for="numbers">Your input list <span class="muted">JSON</span></label>
+            <input id="numbers" name="numbers" placeholder="e.g. [1, 2, 3]" autocomplete="off" spellcheck="false" aria-describedby="constraints feedback-message" aria-required="true">
+            <label for="prediction">Predicted correct output</label>
+            <input id="prediction" name="prediction" placeholder="An integer" autocomplete="off" spellcheck="false" aria-describedby="prediction-help feedback-message" aria-required="true">
+            <p id="prediction-help" class="muted">Predict what the specification requires, even if the code disagrees.</p>
+            <div class="actions"><button class="primary" type="submit">Test my prediction</button><button type="button" id="restart">Restart</button></div>
+          </form>
+          <section class="hint-area" aria-labelledby="hint-title"><div class="hint-heading"><h3 id="hint-title" tabindex="-1">Need a nudge?</h3><button id="hint">Get a hint</button></div><p id="hint-count" class="muted"></p><ol id="hints"></ol></section>
+        </section>
+      </div>
+      <section id="feedback" tabindex="-1" aria-labelledby="feedback-title">
+        <h2 id="feedback-title">What will your test reveal?</h2><p id="feedback-message">Enter a list and your prediction to compare the specification with the program. Hints are here if you want them.</p>
+      </section>
+      <section id="success" hidden aria-label="Completed challenge details">
+        <dl class="comparison"><div><dt>Expected output</dt><dd id="expected"></dd></div><div><dt>Actual program output</dt><dd id="actual"></dd></div></dl>
+        <section class="trace" aria-labelledby="trace-title"><div class="trace-heading"><h2 id="trace-title">Follow the execution</h2><span id="step-count" class="muted"></span></div>
+          <ol id="trace-steps" aria-live="polite" aria-label="Execution trace"></ol>
+          <div class="actions"><button id="previous">Previous</button><button id="step-next">Next</button><button id="show-all" aria-pressed="false">Show all</button></div>
+        </section>
+        <h2>Why it fails</h2><p id="explanation"></p>
+        <div class="actions completion-actions"><button id="next-challenge" class="primary">Next challenge</button><button id="replay">Replay</button><button id="success-menu">Challenge menu</button></div>
+      </section>
+    </section>
+    <section id="summary" hidden aria-labelledby="summary-title"><h1 id="summary-title" tabindex="-1">Session summary</h1><p id="summary-count"></p><div id="summary-list"></div><p class="muted">Completed means you found a counterexample at least once. Skipped challenges are still waiting for you.</p><button id="summary-menu" class="primary">Challenge menu</button></section>
+    <noscript>Enable JavaScript to use this interface, or play TestFirst in the terminal.</noscript>
+  </main>
+  <footer><span>TestFirst</span><span>Be curious. Make a prediction. Try a test.</span></footer>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "scope": "app",
+  "mode": "prototype",
+  "audience": "beginner programmers",
+  "primary_action": "submit an input and predicted correct output",
+  "preserved": ["testfirst/challenges.py:1", "testfirst/engine.py:1", "testfirst/__main__.py:1"],
+  "introduced": ["testfirst/web.py", "testfirst/static", "tests/test_web.py"],
+  "material": "Three existing specifications, trusted Python programs, hints, explanations and traces",
+  "absent": "No photos, testimonials, usage figures or learning-outcome claims",
+  "direction": "Console graphite, system font fallbacks, restrained amber actions, code and prediction workbench",
+  "verification": "Static design lint and direct browser interaction; no render-tier dependency added"
+}
