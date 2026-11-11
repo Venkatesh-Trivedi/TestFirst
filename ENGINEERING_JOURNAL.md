@@ -456,3 +456,131 @@ this journal update, and prepared the requested commit/push. No new human learne
 study was conducted; other browsers and assistive technologies were not tested.
 An already-running server must be restarted to import the updated Python copy;
 the existing process-local progress-reset limitation still applies on restart.
+
+## 2026-11-11 — preparation for Vercel and independent cookie sessions
+
+### Inspection and scope
+
+Inspected `web.py`, the HTTP tests, frontend request URLs, README, latest journal,
+ignore rules, and deployment-file inventory before editing. No Vercel entry point
+or configuration existed. Reused the standard-library HTTP handler and existing
+`BrowserSession` action flow. The three challenge definitions, Python engine,
+terminal interface, and all frontend files are unchanged by this update.
+
+Consulted current official documentation for [Python file-based handlers](https://vercel.com/docs/functions/runtimes/python/api-directory),
+[Python version selection](https://vercel.com/docs/functions/runtimes/python/python-version),
+[Vercel configuration](https://vercel.com/docs/project-configuration/vercel-json),
+and [request headers](https://vercel.com/docs/headers/request-headers). Added only
+the configuration necessary for this standard-library app: `api/index.py`,
+`vercel.json`, and `.python-version` (3.13). No framework or dependencies were added.
+
+### Implementation decisions
+
+- `api/index.py` exports the documented `handler` subclass. It adapts explicit
+  route query markers from Vercel rewrites and also accepts original API paths.
+  `vercel.json` serves `testfirst/static` as the output directory and rewrites
+  the existing `/api/state` and `/api/action` URLs to this Python function.
+  Same-origin content policy, no-sniff, and no-store headers cover static/API
+  responses. Python source is outside the static output directory.
+- Removed the server's shared `BrowserSession`. Every API request restores its
+  own session from a signed cookie; there is no session registry, per-user global,
+  database, local-disk persistence, or dependency on a warm serverless instance.
+- Added `cookies.py`: canonical compact JSON/base64 payload, HMAC-SHA256 signature,
+  constant-time signature comparison, version, and signed 24-hour expiry. The
+  cookie value is capped at 2,048 characters; incoming cookie headers are also
+  bounded before parsing. Invalid/missing/tampered/expired/unsupported cookies
+  reset to a fresh session without accepting their progress.
+- The payload contains selection/view, three hint counts, three completion flags,
+  and either bounded public feedback or the most recent successful input list.
+  It contains no prediction, reference answer, actual output, hint text,
+  explanation, or trace. On successful-state restoration, Python validates the
+  bounded input and recomputes the trusted result/trace on the server. Schema
+  validation rejects wrong types, lengths, states, and impossible summaries.
+- The deployment entry point requires `TESTFIRST_SESSION_SECRET` from the runtime
+  environment, at least 32 bytes, and returns a generic 503 for a missing/short
+  value. It never generates a fallback. Local `make_server` alone initializes an
+  ephemeral random value in that environment variable when it is absent, retaining
+  the existing one-command launch. Setting a stable private value preserves local
+  cookies across process restarts. Real secrets were neither logged nor committed;
+  tests generate disposable keys in memory. Ignore rules now cover `.env`,
+  `.env.*`, and `.vercel/`.
+- Deployment cookies are host-only with Path=/, Secure, HttpOnly, SameSite=Strict,
+  and a 24-hour Max-Age. Local HTTP omits Secure. API state/act responses refresh
+  the signed cookie; assets do not create/change sessions. JSON error responses
+  never disclose the key. Invalid protocol actions do not replace valid progress.
+- Deployment Host is checked against exact configured HTTPS origins plus the
+  platform's `VERCEL_URL`. Origin must match that exact Host and is required for
+  POST mutations. Cross-origin fetch metadata and arbitrary forwarded-host/proto
+  attempts are rejected. Missing/malformed origin configuration fails closed.
+  Local development keeps its exact 127.0.0.1 Host/Origin restriction. Vercel
+  manages deployed connection deadlines; the socket timeout stays local-only.
+- Updated README with exact project settings, environment scopes, origin examples,
+  secret-generation instructions, route layout, and session/security limitations.
+  Earlier shared-session documentation is superseded. Existing shared in-process
+  progress is not migrated into individual cookies.
+
+### Tests actually run
+
+Adapted the existing HTTP test client to retain a cookie jar and send a proper
+Origin on POST. All existing assertions/flows remain, apart from removing direct
+inspection of the now-removed server-global session. The first full run after
+the transport change passed **41 tests**. Runs with new session/deployment checks
+passed **56**, then **57** tests. The final full command was:
+
+```text
+python -m unittest discover -s tests -v
+```
+
+The final run passed **all 57 tests in 3.622 seconds** on Python 3.13.0, using
+approved loopback socket access. No failing test run occurred during this update.
+
+Added meaningful checks for:
+
+- Two independent browser cookie jars over real HTTP: selections, hint counts,
+  and completion do not leak between them. These are simulated independent
+  browsers, not two GUI browser profiles.
+- Reusing one cookie against a fresh HTTP backend with the same secret restores
+  success, explanation/trace, hints, completion, and subsequent summary navigation
+  without any process session object.
+- Modified progress or signatures, malformed/oversized cookies, invalid signed
+  schemas, expiry, future timestamps, secret rotation, and missing/short secrets.
+- Cookie flags, strict payload field inventory, absence of all hint/answer/trace
+  text, and a full-progress/eight-element example remaining below 700 characters,
+  comfortably under the enforced 2,048-character limit. Oversize encoding rejects.
+- Restoration of unsuccessful feedback without answers; replay/reset and skipped
+  summaries; all original validation, outcome, hint, challenge, and terminal tests.
+- The real Vercel handler on a local HTTP test server with HTTPS proxy headers:
+  secure cookies, original/rewritten API paths, custom/preview origins, missing or
+  mismatched Origin, unknown Host, prefix attacks, cross-site metadata, missing
+  configuration, and rewrite/static configuration shape. This simulates the
+  Vercel request contract; it is not a cloud deployment or TLS/browser test.
+
+`git diff --check` passed with normal Windows line-ending notices. `git check-ignore`
+confirmed `.env`, `.env.local`, and `.vercel/project.json` are excluded. Confirmed
+there is no diff in the challenge engine, challenge data, terminal code, or
+frontend. A real terminal `python -m testfirst` piped with `quit` opened its menu
+and exited cleanly.
+
+### Actual browser check and remaining limits
+
+Started an isolated local preview on port 8001 using the new cookie handler,
+preserving the user's existing port-8000 process. In the in-app browser, selected
+most-frequent, requested a hint, completed `[2,1]` with prediction `1`, and reloaded.
+Completion, hint count, expected 1/actual 2, explanation, and trace were restored.
+Replayed and observed zero hints with historical completion retained. Completed
+again, opened the final summary, and reloaded: it accurately remained 1/3 complete
+with both skipped challenges marked Not completed. Saved a screenshot of that
+summary, then stopped the isolated preview. No new human user study occurred.
+
+The Vercel CLI is not installed in this environment. No actual Vercel cloud build,
+production deployment, project/secret creation, or deployed HTTPS check was run.
+The user must set the documented secret/origins and verify the real deployment.
+Cookies require browser support, are signed rather than encrypted, and can be
+copied or replayed until expiry. Concurrent tabs can overwrite each other's latest
+state. There are no accounts, cross-device sync, central revocation, or anti-cheat
+guarantees. Clearing cookies/rotating the secret loses progress. These constraints
+are documented; none affect the fixed trusted challenge evaluation.
+
+Codex performed the inspection, official-doc checks, implementation, transport
+test updates, new session/security tests, all stated verification, README/journal
+edits, and preparation of the requested commit/push. No real secret was committed.

@@ -1,3 +1,6 @@
 __pycache__/
 *.py[cod]
 .hallmark/salt
+.env
+.env.*
+.vercel/

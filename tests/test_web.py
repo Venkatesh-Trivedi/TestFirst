@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from testfirst.challenges import CHALLENGES
 from testfirst.web import BrowserSession, Handler, make_server
+from testfirst.cookies import COOKIE_LIMIT, decode_session, read_cookie
 
 
 class BrowserAPITests(unittest.TestCase):
@@ -25,17 +26,25 @@ class BrowserAPITests(unittest.TestCase):
         cls.logging.stop()
 
     def setUp(self):
-        self.server.session = BrowserSession()
+        self.cookie = ""
 
-    def request(self, method="GET", path="/api/state", data=None, headers=None, raw=None):
-        connection = HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
+    def request(self, method="GET", path="/api/state", data=None, headers=None, raw=None, server=None):
+        server = server or self.server
+        connection = HTTPConnection("127.0.0.1", server.server_port, timeout=5)
         body = raw if raw is not None else json.dumps(data).encode() if data is not None else None
         request_headers = {"Content-Type": "application/json"} if body is not None else {}
+        if self.cookie:
+            request_headers["Cookie"] = self.cookie
+        if method == "POST":
+            request_headers["Origin"] = f"http://127.0.0.1:{server.server_port}"
         request_headers.update(headers or {})
+        request_headers = {key: value for key, value in request_headers.items() if value is not None}
         try:
             connection.request(method, path, body, request_headers)
             response = connection.getresponse()
             payload = response.read()
+            if response.getheader("Set-Cookie"):
+                self.cookie = response.getheader("Set-Cookie").split(";", 1)[0]
             if "application/json" in response.getheader("Content-Type", ""):
                 payload = json.loads(payload)
             return response.status, payload, dict(response.getheaders())
@@ -158,10 +167,10 @@ class BrowserAPITests(unittest.TestCase):
                      {"action": "select", "challenge": 3}, {"action": "next"},
                      {"action": "replay"}, {"action": "submit", "numbers": "[]", "prediction": "0"}]:
             with self.subTest(data=data):
-                before = self.server.session.state()
+                before = self.request()[1]
                 status, _, _ = self.request("POST", "/api/action", data, raw=b"null" if data is None else None)
                 self.assertEqual(status, 400)
-                self.assertEqual(self.server.session.state(), before)
+                self.assertEqual(self.request()[1], before)
         self.act("select", challenge=0)
         self.assertEqual(self.request("POST", "/api/action", {"action": "submit", "numbers": [1], "prediction": 1})[0], 400)
         self.solve(0)
@@ -187,6 +196,93 @@ class BrowserAPITests(unittest.TestCase):
         self.assertEqual(self.request("POST", "/api/action", {"action": "menu"}, headers={"Origin": "http://attacker.example"})[0], 403)
         status, _, _ = self.request("POST", "/api/action", {"action": "menu"}, headers={"Origin": f"http://127.0.0.1:{self.server.server_port}"})
         self.assertEqual(status, 200)
+
+    def test_two_browser_cookie_jars_are_independent(self):
+        self.act("select", challenge=0)
+        self.act("hint")
+        self.act("submit", numbers="[-1]", prediction="-1")
+        browser_a = self.cookie
+        self.cookie = ""
+        browser_b = self.request()[1]
+        self.assertEqual(browser_b["view"], "menu")
+        self.assertFalse(any(c["completed"] for c in browser_b["challenges"]))
+        self.act("select", challenge=1)
+        self.act("hint")
+        browser_b_cookie = self.cookie
+        self.cookie = browser_a
+        browser_a_state = self.request()[1]
+        self.assertEqual(browser_a_state["result"]["outcome"], "success")
+        self.assertEqual([c["hints_used"] for c in browser_a_state["challenges"]], [1, 0, 0])
+        self.cookie = browser_b_cookie
+        self.assertEqual([c["hints_used"] for c in self.request()[1]["challenges"]], [0, 1, 0])
+
+    def test_fresh_backend_restores_cookie_without_process_session(self):
+        self.act("select", challenge=2)
+        self.act("hint")
+        expected = self.act("submit", numbers="[2,1]", prediction="1")
+        fresh = make_server(0)
+        fresh.session_secret = self.server.session_secret
+        worker = threading.Thread(target=fresh.serve_forever, daemon=True)
+        worker.start()
+        try:
+            self.assertFalse(hasattr(fresh, "session"))
+            self.assertEqual(self.request(server=fresh)[1], expected)
+            state = self.request("POST", "/api/action", {"action": "next"}, server=fresh)[1]
+            self.assertEqual(state["view"], "summary")
+            self.assertEqual([c["completed"] for c in state["challenges"]], [False, False, True])
+        finally:
+            fresh.shutdown()
+            fresh.server_close()
+            worker.join()
+
+    def test_cookie_is_small_and_contains_no_hint_answer_or_trace_data(self):
+        self.act("select", challenge=2)
+        self.act("hint")
+        self.act("submit", numbers="[20,-20]", prediction="-20")
+        _, _, headers = self.request()
+        header = headers["Set-Cookie"]
+        self.assertIn("HttpOnly", header)
+        self.assertIn("SameSite=Strict", header)
+        self.assertIn("Path=/", header)
+        self.assertNotIn("Domain=", header)
+        self.assertNotIn("; Secure", header)
+        self.assertLess(len(header), 4096)
+        token = read_cookie(self.cookie)
+        self.assertLessEqual(len(token), COOKIE_LIMIT)
+        data = decode_session(token, self.server.session_secret)
+        self.assertEqual(data["result"], {"numbers": [20, -20]})
+        self.assertEqual(data["hints"], [0, 0, 1])
+        self.assertEqual(set(data), {"v", "exp", "selected", "view", "hints", "completed", "result"})
+        serialized = json.dumps(data)
+        for secret_field in ("reference", "expected", "actual", "trace", "explanation", "prediction"):
+            self.assertNotIn(secret_field, serialized)
+        for challenge in CHALLENGES:
+            for hint in challenge.hints:
+                self.assertNotIn(hint, serialized)
+
+    def test_tampered_cookie_cannot_restore_or_forge_progress(self):
+        self.solve(0)
+        valid = read_cookie(self.cookie)
+        body, signature = valid.split(".")
+        for bad in ("x" + valid, body + "." + "0" * 64, valid + "x", "x" * (COOKIE_LIMIT + 1)):
+            self.cookie = "testfirst_session=" + bad
+            status, state, _ = self.request()
+            self.assertEqual(status, 200)
+            self.assertEqual(state["view"], "menu")
+            self.assertIsNone(state["result"])
+            self.assertFalse(any(c["completed"] for c in state["challenges"]))
+
+    def test_failed_attempt_feedback_survives_fresh_request_without_answers(self):
+        self.act("select", challenge=0)
+        for numbers, prediction in (("bad", "0"), ("[-1]", "0"), ("[1]", "1")):
+            expected = self.act("submit", numbers=numbers, prediction=prediction)
+            self.assertEqual(self.request()[1], expected)
+            self.assertEqual(set(expected["result"]), {"outcome", "message"})
+
+    def test_local_guard_requires_origin_for_mutations_and_ignores_forwarded_headers(self):
+        for headers in ({"Origin": None}, {"Origin": ""}, {"Origin": "null"}, {"Sec-Fetch-Site": "cross-site"},
+                        {"Origin": "https://evil.example", "X-Forwarded-Host": "evil.example", "X-Forwarded-Proto": "https"}):
+            self.assertEqual(self.request("POST", "/api/action", {"action": "menu"}, headers=headers)[0], 403)
 
 
 if __name__ == "__main__":
