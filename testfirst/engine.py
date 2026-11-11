@@ -54,6 +54,7 @@ def parse_attempt(
 class Game:
     challenge: Challenge = LARGEST
     hints_used: int = 0
+    completed: bool = False
 
     def next_hint(self) -> str | None:
         if self.hints_used == len(self.challenge.hints):
@@ -84,6 +85,7 @@ class Game:
                 "Correct prediction, but this input does not expose the bug. Try another list.",
                 expected, actual,
             )
+        self.completed = True
         return Attempt(
             Outcome.SUCCESS, "Success! Your input exposes the bug.",
             expected, actual, self.challenge.trace(numbers),

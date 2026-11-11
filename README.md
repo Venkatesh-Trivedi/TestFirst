@@ -44,15 +44,33 @@ then displays expected and actual outputs, an execution trace, and an explanatio
 The largest-number trace shows the initial `best` and every comparison/update;
 second-largest shows the sorted list and selected position; most-frequent shows
 count updates, dictionary key order, and the tie-selection rule. All traces end
-with the actual return value. Try another list after any outcome.
+with the actual return value. Unsuccessful attempts let you try another list.
+Success opens a dedicated completion menu, never directly another list prompt:
+
+```text
+[next / menu / replay / quit]
+```
+
+- `next`: open the next challenge in menu order. After the last challenge, show
+  a session summary of completed/not-completed challenges and current hint counts,
+  then exit. Skipped challenges are not marked complete.
+- `menu`: return to numbered challenge selection.
+- `replay`: explicitly restart the current challenge and reset its hints.
+- `quit`: exit.
+
+Invalid completion choices stay at this menu. Completed challenges are marked
+`[complete]` in the main menu. Completion means you have solved the challenge at
+least once in this session; replay/restart and later unsuccessful attempts do
+not remove the mark. Repeated successes count once. Choosing a challenge from
+the main menu opens it for attempts, preserving its existing hints and mark.
 
 At the **list prompt**, enter `hint` for the next of three optional hints,
 `restart` to redisplay the challenge and reset its hint count, `menu` to choose
 another challenge, or `quit` to exit. Each challenge has its own three hints.
 Retrying and switching away/back preserve that challenge's hint count; restart
 only resets the selected challenge. EOF or Ctrl+C exits cleanly at any prompt.
-Commands are only recognized at the list prompt; the prediction prompt accepts
-a JSON integer. Hints never appear automatically.
+The prediction prompt accepts a JSON integer; use the commands shown at the
+list, selection, or completion prompt. Hints never appear automatically.
 
 ## Project layout
 
@@ -71,6 +89,8 @@ Different input shapes will still need validation changes. There is no dynamic
 code loading or plugin system. The separate tracers must stay aligned with their
 trusted functions; tests check intermediate steps and return values.
 
-Progress and hints live only in memory. There are no accounts, storage, scores,
+Completion marks and hints live only in memory and reset when you exit.
+Summary hint counts reflect the current count after any replay/reset, not a
+lifetime total. There are no accounts, storage, scores,
 AI services, or web interface. Player text is parsed with `json.loads` and is
 never executed.

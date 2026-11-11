@@ -161,3 +161,65 @@ by Codex and no learning-effectiveness claims are made. The user's earlier
 terminal transcript supplied usability feedback. Other Python versions and
 operating systems were not checked; no web UI, persistence, scoring, accounts,
 AI services, or plugin system were added.
+
+## 2026-11-11 — dedicated completion menu
+
+### Changes and decisions
+
+The user's screenshot showed that the post-success list prompt was confusing.
+This update replaces that flow with `Completion menu [next / menu / replay / quit]`
+after the success explanation and trace. It supersedes the earlier documented
+behavior of automatically returning to another list attempt after success.
+
+- `next` opens the next challenge in the fixed menu order. From the last
+  challenge it prints a session summary and exits. The summary reports each
+  challenge's completion status and current hint count; skipped challenges stay
+  incomplete. There is no score or requirement to complete earlier challenges.
+- `menu` returns to challenge selection. Completed entries show `[complete]`.
+- `replay` calls the existing restart method to reset only the current game's
+  hints before displaying its specification/function and requesting another list.
+- `quit` exits. Empty input, list text, and unsupported commands at completion
+  produce an invalid-choice message and keep the completion menu open.
+- `Game.completed` is set only on a successful evaluation. It records having
+  solved that challenge at least once; replay, restart, and later failures retain
+  it. Repeated successes cannot inflate the summary count. New process/game
+  instances start incomplete. Selection from the main menu still opens a
+  challenge for attempts with its current hints, including completed entries.
+
+Reviewed the terminal selection and attempt loop, engine state, and their tests
+before editing. Changes reach `engine.py`, `__main__.py`, both existing engine
+and terminal test files, README, and this journal. Existing specifications,
+validation, trusted functions, traces, and the four attempt outcomes are
+unchanged. No dependencies, storage, or general navigation framework were added.
+
+### Validation actually run
+
+Ran `python -m unittest discover -s tests -v`: **30 tests passed** in **1.802
+seconds** on Python 3.13.0. This includes all previous algorithm/trace checks.
+New tests verify success-only completion state, persistence through replay and
+failed attempts, completion-menu invalid choices, no automatic list prompt,
+next through all challenges, summary after last, skipped challenges, completion
+markers, per-game hint reset/isolation, repeated success counted once, new
+session reset, and clean EOF/Ctrl+C handling at completion and the prompts reached
+by menu/replay/next. Updated prior success/retry tests to request replay explicitly.
+
+Ran the actual `python -m testfirst` entry point with piped input: selected the
+first challenge, requested one hint, succeeded, entered an invalid completion
+choice, replayed with hints reset, succeeded again, returned to the main menu
+and observed its completion mark, selected challenge two, completed it, used next
+to open challenge three, completed it, and used next to print the 3/3 summary and
+exit. No direct list prompt appeared after success without an explicit replay
+or challenge selection/navigation action. Ran `git diff --check` successfully;
+Git reported only the usual Windows line-ending conversion warnings.
+
+### Limitations and Codex work
+
+Completion marks and hints are process-local. Summary hint counts reflect resets,
+not lifetime usage. After the last challenge, next ends the session after showing
+the summary; use menu instead to continue exploring. No new user study or learning
+evaluation was conducted. Other Python versions and operating systems were not
+tested; prior source-file/line-size and hand-maintained-trace limitations remain.
+
+Codex implemented the changes, updated tests/docs, ran the full suite and terminal
+smoke check, reviewed results, and prepared the commit and push under the user's
+existing publication request.

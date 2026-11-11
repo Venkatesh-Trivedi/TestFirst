@@ -76,6 +76,21 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(game.hints_used, 0)
         self.assertEqual(game.next_hint(), LARGEST.hints[0])
 
+    def test_completion_requires_success_and_survives_restart(self):
+        game = Game()
+        self.assertFalse(game.completed)
+        for text, prediction in (("bad", "0"), ("[-1]", "0"), ("[1]", "1")):
+            game.evaluate(text, prediction)
+            self.assertFalse(game.completed)
+        game.evaluate("[-1]", "-1")
+        self.assertTrue(game.completed)
+        game.next_hint()
+        game.restart()
+        self.assertEqual(game.hints_used, 0)
+        self.assertTrue(game.completed)
+        game.evaluate("[1]", "1")
+        self.assertTrue(game.completed)
+
 
 class TraceTests(unittest.TestCase):
     def test_all_negative_trace(self):
