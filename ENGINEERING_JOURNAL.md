@@ -360,3 +360,48 @@ the focused cleanup, wrote HTTP tests, corrected the example and lint findings,
 ran the stated tests and browser checks, updated documentation, and prepared the
 requested commit/push. No account, AI API, persistence, scoring, extra challenge,
 or deployment work was added.
+
+## 2026-11-11 — explanatory challenge-menu hero
+
+Consolidated the menu's two introductory blocks into one hero using the existing
+counterexample heading and the supplied game description: invent an input,
+predict the correct output, and learn why the program fails. Added the exact
+`Try your first challenge` CTA and the three requested steps: Read the promise,
+Design a test, and Discover the bug. Retained the neutral example once below
+the steps and kept the existing challenge list below it.
+
+The CTA calls `act("select", { challenge: 0 })`, the same selection flow as the
+challenge navigation/list. No duplicate state logic or automatic restart was
+added. Everything lives inside the existing menu section, which is hidden on
+active challenges and summaries. Steps use a semantic ordered list, three
+columns on wide screens, and a single column below 36rem. Buttons reuse existing
+colors, dimensions, focus styles, pending handling, and keyboard behavior.
+
+Inspected the current HTML, JavaScript selection/rendering, CSS, and latest
+journal before editing. Changed only `static/index.html`, `static/app.js`,
+`static/style.css`, and this journal. Removed obsolete introductory styles.
+Python challenges, engine, server/API, and terminal behavior are unchanged.
+
+Validation actually performed:
+
+- Ran `python -m unittest discover -s tests -v` with loopback access enabled:
+  **all 40 existing tests passed in 2.192 seconds** on Python 3.13.0.
+- `node --check testfirst/static/app.js` and `git diff --check` passed. Static
+  design lint reported **0 failures, 0 reflex findings, 0 warnings**.
+- In the running browser, opened the menu and verified the hero, three steps,
+  single neutral example, and existing challenge list. Tab reached the CTA from
+  the menu heading with a solid visible focus outline. Enter activated it and
+  opened challenge 1, focused its heading, and hid the menu/hero. The existing
+  completion mark and three used hints remained intact, confirming selection
+  did not silently restart the challenge.
+- Returned to the menu. At 375px the steps stacked vertically, the challenge
+  list followed them, and document width remained within the viewport. At
+  1280px all three steps shared one row, without page overflow. Restored the
+  normal browser viewport and saved a narrow-screen preview showing the hero,
+  CTA focus, and beginning of the steps.
+
+Codex performed the focused implementation, browser checks, test run, and journal
+update, and prepared the requested commit/push. No additional feature or
+dependency was introduced. No new human user study was conducted; assistive
+technologies, other browsers, and operating systems were not tested. Existing
+in-memory session limitations remain.

@@ -28,8 +28,12 @@ main { max-width: 1280px; padding: var(--space-lg) var(--gutter) var(--space-2xl
 .intro { margin-block: var(--space-xl); }
 .intro h1 { max-width: none; font-size: var(--text-3xl); margin-bottom: var(--space-md); }
 .intro p { color: var(--color-ink-2); }
-.goal { border-block: 1px solid var(--color-rule); padding-block: var(--space-lg); margin-bottom: var(--space-lg); }
-.goal p { margin-top: var(--space-sm); color: var(--color-ink-2); }
+.intro button { margin-top: var(--space-lg); }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); border-block: 1px solid var(--color-rule); padding: var(--space-lg); margin: 0; }
+.steps li { padding-left: var(--space-xs); }
+.steps li::marker { color: var(--color-muted); }
+.steps p { margin-top: var(--space-sm); color: var(--color-ink-2); }
+.menu-example { color: var(--color-muted); margin-block: var(--space-lg); }
 .challenge-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); padding-block: var(--space-lg); border-bottom: 1px solid var(--color-rule); }
 .challenge-row p { margin-block: var(--space-xs); color: var(--color-ink-2); }
 .challenge-row button { flex-shrink: 0; }
@@ -82,6 +86,7 @@ footer { border-top: 1px solid var(--color-rule); font-size: var(--text-sm); }
   .attempt { border-left: 0; border-top: 1px solid var(--color-rule); padding-left: 0; }
 }
 @media (max-width: 36rem) {
+  .steps { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
   #navigation { flex-direction: column; }
   .challenge-row, .section-heading { align-items: flex-start; flex-direction: column; }
   .comparison { gap: var(--space-lg); }

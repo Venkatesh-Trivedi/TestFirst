@@ -20,10 +20,14 @@
     <div id="notice" role="status" aria-live="polite" aria-atomic="true">Loading your challenges…</div>
     <section id="menu" hidden aria-labelledby="menu-title">
       <div class="intro"><h1 id="menu-title" tabindex="-1">Find the counterexample.</h1>
-      <p>Read the promise. Test the program. Find an input that proves they disagree.</p></div>
-      <div class="goal"><h2>You write the test, not the code.</h2>
-      <p>Choose a list, then predict the answer the specification requires. Your goal is a correct prediction that the program gets wrong.</p>
-      <p>For example, <code>[1, 2, 3]</code> is a valid list. The largest value is <code>3</code>. A valid test can also leave a bug hidden.</p></div>
+      <p>Invent an input that exposes a bug, predict the correct output, then learn why the program fails.</p>
+      <button id="first-challenge" class="primary">Try your first challenge</button></div>
+      <ol class="steps" aria-label="How to play">
+        <li><h2>Read the promise</h2><p>Understand what the function should return.</p></li>
+        <li><h2>Design a test</h2><p>Enter an input and predict its correct output.</p></li>
+        <li><h2>Discover the bug</h2><p>Expose a disagreement and inspect the execution.</p></li>
+      </ol>
+      <p class="menu-example">For example, <code>[1, 2, 3]</code> is a valid list. The largest value is <code>3</code>. A valid test can also leave a bug hidden.</p>
       <div id="challenge-list"></div>
     </section>
     <section id="practice" hidden aria-labelledby="challenge-title">

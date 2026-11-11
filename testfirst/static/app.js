@@ -150,6 +150,7 @@ $("attempt-form").addEventListener("submit", (event) => {
   act("submit", { numbers: $("numbers").value, prediction: $("prediction").value });
 });
 for (const id of ["back-menu", "success-menu", "summary-menu"]) $(id).addEventListener("click", () => act("menu"));
+$("first-challenge").addEventListener("click", () => act("select", { challenge: 0 }));
 for (const action of ["hint", "restart", "replay"]) $(action).addEventListener("click", () => act(action));
 $("next-challenge").addEventListener("click", () => act("next"));
 $("previous").addEventListener("click", () => { showAll = false; traceIndex = Math.max(0, traceIndex - 1); renderTrace(); });
