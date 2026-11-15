@@ -16,7 +16,8 @@ python -m testfirst.web
 Open [TestFirst locally](http://127.0.0.1:8000). The server binds only to
 `127.0.0.1:8000`; stop it with Ctrl+C in its terminal. Use that exact address
 (rather than `localhost`). Port 8000 must be available. No build step, package
-manager, network assets, or internet connection is needed.
+manager, or internet connection is needed to play locally. The optional Vercel
+analytics script returns 404 locally; this does not affect the game.
 
 The terminal version remains available:
 
@@ -122,6 +123,22 @@ for local development. The terminal game needs no secret.
 Frontend URLs and JavaScript are unchanged. Python source and tests are outside
 the static output directory. Response headers disable caching and restrict content
 to the same origin. The handler accepts both original and rewritten API paths.
+
+### Web Analytics
+
+Enable **Web Analytics** for this project in Vercel, then deploy the commit.
+The [official plain HTML integration](https://vercel.com/docs/analytics/quickstart)
+loads `/_vercel/insights/script.js` once, after the external `/analytics.js`
+initialization. Both scripts use `defer`; the existing same-origin Content
+Security Policy remains unchanged. No npm packages or build step are needed.
+
+Only automatic page views are tracked. No custom events are sent for attempts,
+hints, or challenge transitions, and no submitted numbers, predictions, cookies,
+or session state are added to analytics payloads. Challenges are views within
+one page, so switching challenges does not record additional page views.
+If analytics is disabled, blocked, or unavailable, the game continues working.
+After deployment, check the browser Network panel for the insights script and
+page-view request, then check Vercel's Web Analytics dashboard for traffic.
 
 On Vercel the cookie is `Secure`, `HttpOnly`, `SameSite=Strict`, host-only, and
 scoped to `/`. Its value is capped at 2,048 characters (the full header remains

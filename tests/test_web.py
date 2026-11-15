@@ -1,4 +1,5 @@
 from http.client import HTTPConnection
+from html.parser import HTMLParser
 import json
 import threading
 import unittest
@@ -179,7 +180,7 @@ class BrowserAPITests(unittest.TestCase):
 
     def test_http_boundaries_and_static_allowlist(self):
         self.assertEqual(self.server.server_address[0], "127.0.0.1")
-        for path in ("/", "/app.js", "/style.css", "/tokens.css", "/base.css"):
+        for path in ("/", "/app.js", "/analytics.js", "/style.css", "/tokens.css", "/base.css"):
             status, body, headers = self.request(path=path)
             self.assertEqual(status, 200)
             self.assertTrue(body)
@@ -196,6 +197,34 @@ class BrowserAPITests(unittest.TestCase):
         self.assertEqual(self.request("POST", "/api/action", {"action": "menu"}, headers={"Origin": "http://attacker.example"})[0], 403)
         status, _, _ = self.request("POST", "/api/action", {"action": "menu"}, headers={"Origin": f"http://127.0.0.1:{self.server.server_port}"})
         self.assertEqual(status, 200)
+
+    def test_analytics_scripts_are_external_ordered_and_optional_locally(self):
+        class Scripts(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.scripts = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag == "script":
+                    self.scripts.append(dict(attrs))
+
+        status, body, headers = self.request(path="/")
+        self.assertEqual(status, 200)
+        parser = Scripts()
+        parser.feed(body.decode())
+        self.assertEqual(parser.scripts, [
+            {"src": "/analytics.js", "defer": None},
+            {"src": "/_vercel/insights/script.js", "defer": None},
+            {"src": "/app.js", "defer": None},
+        ])
+        self.assertEqual(headers["Content-Security-Policy"],
+                         "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+        status, _, headers = self.request(path="/analytics.js")
+        self.assertEqual(status, 200)
+        self.assertIn("text/javascript", headers["Content-Type"])
+        self.assertNotIn("Set-Cookie", headers)
+        self.assertEqual(self.request(path="/_vercel/insights/script.js")[0], 404)
+        self.assertEqual(self.solve(0)["result"]["outcome"], "success")
 
     def test_two_browser_cookie_jars_are_independent(self):
         self.act("select", challenge=0)

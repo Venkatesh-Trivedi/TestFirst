@@ -584,3 +584,43 @@ are documented; none affect the fixed trusted challenge evaluation.
 Codex performed the inspection, official-doc checks, implementation, transport
 test updates, new session/security tests, all stated verification, README/journal
 edits, and preparation of the requested commit/push. No real secret was committed.
+
+## 2026-11-15 — Plain HTML Vercel Web Analytics
+
+Codex inspected the HTML, static allowlist, HTTP and Vercel headers, existing
+tests, README, and this journal. Checked Vercel's official Web Analytics quickstart
+at https://vercel.com/docs/analytics/quickstart. Used its plain HTML queue
+initialization in an external `analytics.js`, followed by exactly one deferred
+`/_vercel/insights/script.js` tag. The local static allowlist now serves the
+initializer. No dependencies, framework, engine, session, or CSP changes were
+needed; Vercel's static output already includes the new file.
+
+Analytics is independent of the game: no calls were added to submissions, hints,
+navigation, or completion. Only the vendor's automatic page views are enabled;
+no player inputs, predictions, cookie values, or session state are included in
+custom analytics payloads. Challenge views share one URL and do not generate
+separate page views. Locally the insights endpoint returns 404, while the app
+and API remain functional. README documents this and the Vercel dashboard's
+Enable Web Analytics prerequisite followed by deployment.
+
+Actual checks:
+
+- First `python -m unittest discover -s tests -v` ran 58 tests but encountered
+  39 HTTP/subtest errors from sandbox-denied loopback connections (WinError
+  10013). No tests were skipped or weakened. Rerunning the same command with
+  loopback access passed all 58 tests in 2.240 seconds.
+- New HTTP integration test parses the script tags, verifies external deferred
+  execution order and a single insights reference, checks the unchanged CSP and
+  JavaScript content type, checks no cookie is set by the initializer response,
+  and successfully solves a challenge after the local analytics request is 404.
+- `node --check testfirst/static/analytics.js` passed. A Node VM assert-based
+  self-check passed for inert initialization, queue behavior, repeated
+  initialization, and preserving an already installed tracker. Node was used
+  only for verification, with no npm setup or runtime dependency.
+- `git diff --check` passed (Windows line-ending notices only).
+
+Codex performed these edits, checks, documentation, and commit/push preparation.
+No browser rendering, deployed page-view network request, Vercel dashboard
+collection, or human user testing was checked for this change. Dashboard
+enablement/deployment and live collection remain operational verification steps;
+ad blockers or unavailable analytics may prevent collection without blocking play.
