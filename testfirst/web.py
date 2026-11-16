@@ -45,13 +45,19 @@ class BrowserSession:
                 raise ValueError("Invalid view.")
             if type(data["hints"]) is not list or type(data["completed"]) is not list:
                 raise ValueError("Invalid progress.")
-            if len(data["hints"]) != len(session.games) or len(data["completed"]) != len(session.games):
+            previous_count = len(data["hints"])
+            if previous_count not in (3, len(session.games)) or len(data["completed"]) != previous_count:
                 raise ValueError("Invalid progress length.")
+            if index >= previous_count:
+                raise ValueError("Invalid previous selection.")
             for game, hints, completed in zip(session.games, data["hints"], data["completed"]):
                 if type(hints) is not int or not 0 <= hints <= len(game.challenge.hints) or type(completed) is not bool:
                     raise ValueError("Invalid progress values.")
                 game.hints_used, game.completed = hints, completed
             session.selected, session.view = index, data["view"]
+            # Preserve signed progress from the original three-challenge release.
+            if previous_count == 3 and session.view == "summary" and index == 2 and session.games[2].completed:
+                session.view = "menu"
             result = data["result"]
             if result is not None:
                 if session.view != "challenge" or type(result) is not dict:

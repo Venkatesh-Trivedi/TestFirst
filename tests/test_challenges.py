@@ -4,11 +4,53 @@ import json
 import unittest
 from unittest.mock import Mock
 
-from testfirst.challenges import CHALLENGES, SECOND_LARGEST, MOST_FREQUENT
+from testfirst.challenges import CHALLENGES, SECOND_LARGEST, MOST_FREQUENT, SUM_POSITIVE, COUNT_POSITIVE
 from testfirst.engine import Game, Outcome, parse_numbers
 
 
 class NewChallengeTests(unittest.TestCase):
+    def test_positive_challenge_outcomes_and_boundaries(self):
+        for challenge, cases in (
+            (SUM_POSITIVE, [([2, -1], 2, 1), ([-20], 0, -20),
+                            ([20] * 8, 160, 160), ([0], 0, 0), ([-1, 1], 1, 0)]),
+            (COUNT_POSITIVE, [([0], 0, 1), ([0, -20, 20], 1, 2),
+                              ([20] * 8, 8, 8), ([-20], 0, 0), ([1, 1], 2, 2)]),
+        ):
+            for numbers, expected, actual in cases:
+                with self.subTest(challenge=challenge.title, numbers=numbers):
+                    result = Game(challenge).evaluate(json.dumps(numbers), str(expected))
+                    self.assertEqual((result.expected, result.actual), (expected, actual))
+                    self.assertEqual(result.outcome, Outcome.SUCCESS if expected != actual else Outcome.NO_BUG)
+                    self.assertEqual(Game(challenge).evaluate(json.dumps(numbers), str(expected + 1)).outcome,
+                                     Outcome.INCORRECT_PREDICTION)
+
+    def test_positive_challenge_exact_traces(self):
+        self.assertEqual(SUM_POSITIVE.trace([2, -1, 0]), (
+            "Initial: total = 0",
+            "Iteration 1: number = 2; add 2; total: 0 -> 2",
+            "Iteration 2: number = -1; add -1; total: 2 -> 1",
+            "Iteration 3: number = 0; add 0; total: 1 -> 1",
+            "Return: 1",
+        ))
+        self.assertEqual(COUNT_POSITIVE.trace([-1, 0, 2]), (
+            "Initial: count = 0",
+            "Iteration 1: number = -1; -1 >= 0 is False; no update; count: 0 -> 0",
+            "Iteration 2: number = 0; 0 >= 0 is True; increment; count: 0 -> 1",
+            "Iteration 3: number = 2; 2 >= 0 is True; increment; count: 1 -> 2",
+            "Return: 2",
+        ))
+
+    def test_positive_challenges_small_domain_exhaustive(self):
+        for length in range(1, 5):
+            for values in product(range(-2, 3), repeat=length):
+                for challenge in (SUM_POSITIVE, COUNT_POSITIVE):
+                    numbers = list(values)
+                    positives = [n for n in numbers if n > 0]
+                    expected = sum(positives) if challenge is SUM_POSITIVE else len(positives)
+                    self.assertEqual(challenge.reference(numbers), expected)
+                    self.assertEqual(challenge.trace(numbers)[-1], f"Return: {challenge.buggy(numbers)}")
+                    self.assertEqual(numbers, list(values))
+
     def test_second_largest_outcomes(self):
         cases = [
             ([1, 3, 3], 1, Outcome.SUCCESS, 3),

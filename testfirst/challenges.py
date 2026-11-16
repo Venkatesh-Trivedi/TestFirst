@@ -80,6 +80,57 @@ def trace_most_frequent(numbers: list[int]) -> tuple[str, ...]:
     return tuple(steps)
 
 
+def sum_positive(numbers):
+    total = 0
+    for number in numbers:
+        total += number
+    return total
+
+
+def reference_sum_positive(numbers):
+    return sum(number for number in numbers if number > 0)
+
+
+def trace_sum_positive(numbers):
+    total = 0
+    steps = ["Initial: total = 0"]
+    for index, number in enumerate(numbers, 1):
+        before = total
+        total += number
+        steps.append(f"Iteration {index}: number = {number}; add {number}; total: {before} -> {total}")
+    steps.append(f"Return: {total}")
+    return tuple(steps)
+
+
+def count_positive(numbers):
+    count = 0
+    for number in numbers:
+        if number >= 0:
+            count += 1
+    return count
+
+
+def reference_count_positive(numbers):
+    return sum(1 for number in numbers if number > 0)
+
+
+def trace_count_positive(numbers):
+    count = 0
+    steps = ["Initial: count = 0"]
+    for index, number in enumerate(numbers, 1):
+        before = count
+        counted = number >= 0
+        if counted:
+            count += 1
+        decision = "increment" if counted else "no update"
+        steps.append(
+            f"Iteration {index}: number = {number}; {number} >= 0 is {counted}; "
+            f"{decision}; count: {before} -> {count}"
+        )
+    steps.append(f"Return: {count}")
+    return tuple(steps)
+
+
 @dataclass(frozen=True)
 class Challenge:
     title: str
@@ -167,4 +218,44 @@ MOST_FREQUENT = Challenge(
     ),
 )
 
-CHALLENGES = (LARGEST, SECOND_LARGEST, MOST_FREQUENT)
+SUM_POSITIVE = Challenge(
+    title="Sum the positive numbers",
+    specification=(
+        "Return the sum of numbers greater than zero. Ignore zero and negative "
+        "numbers. Count repeated positive numbers each time. Return 0 if none are positive."
+    ),
+    buggy=sum_positive,
+    reference=reference_sum_positive,
+    trace=trace_sum_positive,
+    hints=(
+        "Which numbers should contribute to the total?",
+        "The loop adds every number, without checking its sign.",
+        "Try [2, -1]. Only 2 should contribute, so the correct sum is 2.",
+    ),
+    explanation=(
+        "The loop adds negative numbers too, reducing the total. The specification "
+        "requires only positive numbers. Add a number only when number > 0."
+    ),
+)
+
+COUNT_POSITIVE = Challenge(
+    title="Count the positive numbers",
+    specification=(
+        "Return how many numbers are greater than zero. Zero is not positive. "
+        "Count repeated positive numbers each time. Return 0 if none are positive."
+    ),
+    buggy=count_positive,
+    reference=reference_count_positive,
+    trace=trace_count_positive,
+    hints=(
+        "Check the boundary between positive and non-positive numbers.",
+        "Does number >= 0 count a value that the specification excludes?",
+        "Try [0]. It contains no positive numbers, so the correct count is 0.",
+    ),
+    explanation=(
+        "The >= comparison includes zero, but zero is not positive. Use number > 0 "
+        "so only strictly positive numbers increment the count."
+    ),
+)
+
+CHALLENGES = (LARGEST, SECOND_LARGEST, MOST_FREQUENT, SUM_POSITIVE, COUNT_POSITIVE)

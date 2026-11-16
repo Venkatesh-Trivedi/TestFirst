@@ -54,7 +54,7 @@ class CookieTests(unittest.TestCase):
 
     def test_authenticated_but_invalid_schema_resets_without_execution(self):
         original = BrowserSession().snapshot()
-        for changes in ({"selected": True}, {"selected": 3}, {"hints": [4, 0, 0]},
+        for changes in ({"selected": True}, {"selected": 5}, {"hints": [4, 0, 0]},
                         {"hints": [True, 0, 0]}, {"completed": [1, False, False]},
                         {"completed": []}, {"view": "unknown"}, {"view": "summary"},
                         {"result": {"numbers": []}}, {"extra": "unexpected"}):
@@ -67,6 +67,24 @@ class CookieTests(unittest.TestCase):
         self.assertIsNone(read_cookie("invalid cookie"))
         for token in ("", "bad", ".", "%%%" + "." + "a" * 64, "x" * 2049):
             self.assertIsNone(decode_session(token, self.secret))
+
+    def test_original_three_challenge_cookie_preserves_progress(self):
+        session = BrowserSession()
+        session.act({"action": "select", "challenge": 2})
+        session.act({"action": "hint"})
+        session.act({"action": "submit", "numbers": "[2,1]", "prediction": "1"})
+        original = session.snapshot()
+        original["hints"] = original["hints"][:3]
+        original["completed"] = original["completed"][:3]
+        for summary in (False, True):
+            snapshot = {**original, **({"view": "summary", "result": None} if summary else {})}
+            restored = BrowserSession.restore(decode_session(encode_session(snapshot, self.secret), self.secret))
+            state = restored.state()
+            self.assertEqual([c["completed"] for c in state["challenges"]], [False, False, True, False, False])
+            self.assertEqual([c["hints_used"] for c in state["challenges"]], [0, 0, 1, 0, 0])
+            self.assertEqual(state["view"], "menu" if summary else "challenge")
+            if not summary:
+                self.assertEqual(state["result"]["outcome"], "success")
 
     def test_missing_or_short_secret_fails_closed_and_is_not_generated_for_deployment(self):
         for value in ("", "too-short"):

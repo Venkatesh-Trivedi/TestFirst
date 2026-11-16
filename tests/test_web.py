@@ -59,15 +59,15 @@ class BrowserAPITests(unittest.TestCase):
 
     def solve(self, index):
         self.act("select", challenge=index)
-        numbers, prediction = [("[-2,-1]", "-1"), ("[1,3,3]", "1"), ("[2,1]", "1")][index]
+        numbers, prediction = [("[-2,-1]", "-1"), ("[1,3,3]", "1"), ("[2,1]", "1"), ("[2,-1]", "2"), ("[0]", "0")][index]
         return self.act("submit", numbers=numbers, prediction=prediction)
 
-    def test_initial_state_has_exactly_three_challenges_and_no_spoilers(self):
+    def test_initial_state_has_exactly_five_challenges_and_no_spoilers(self):
         status, state, headers = self.request()
         self.assertEqual(status, 200)
         self.assertEqual(state["view"], "menu")
         self.assertIsNone(state["result"])
-        self.assertEqual(len(state["challenges"]), 3)
+        self.assertEqual(len(state["challenges"]), 5)
         for data, challenge in zip(state["challenges"], CHALLENGES):
             self.assertEqual(data["source"], challenge.source)
             self.assertEqual(data["specification"], challenge.specification)
@@ -109,7 +109,7 @@ class BrowserAPITests(unittest.TestCase):
             self.assertEqual(state["result"]["actual"], 3 if index == 1 else 2)
 
     def test_displayed_example_is_neutral_for_every_challenge(self):
-        for index, prediction in enumerate(("3", "2", "1")):
+        for index, prediction in enumerate(("3", "2", "1", "6", "3")):
             self.act("select", challenge=index)
             state = self.act("submit", numbers="[1, 2, 3]", prediction=prediction)
             self.assertEqual(state["result"]["outcome"], "no_bug")
@@ -143,29 +143,29 @@ class BrowserAPITests(unittest.TestCase):
         self.assertEqual(set(state["result"]), {"outcome", "message"})
 
     def test_next_progression_and_final_summary(self):
-        for index in range(3):
+        for index in range(len(CHALLENGES)):
             self.solve(index)
             state = self.act("next")
             self.assertIsNone(state["result"])
-            self.assertEqual(state["view"], "summary" if index == 2 else "challenge")
-            self.assertEqual(state["selected"], min(index + 1, 2))
-        self.assertEqual(sum(c["completed"] for c in state["challenges"]), 3)
+            self.assertEqual(state["view"], "summary" if index == len(CHALLENGES) - 1 else "challenge")
+            self.assertEqual(state["selected"], min(index + 1, len(CHALLENGES) - 1))
+        self.assertEqual(sum(c["completed"] for c in state["challenges"]), len(CHALLENGES))
         state = self.act("menu")
         self.assertEqual(state["view"], "menu")
 
     def test_skips_repeated_success_and_server_restart(self):
-        self.solve(2)
+        self.solve(4)
         self.act("replay")
-        self.act("submit", numbers="[2,1]", prediction="1")
+        self.act("submit", numbers="[0]", prediction="0")
         state = self.act("next")
         self.assertEqual(state["view"], "summary")
-        self.assertEqual([c["completed"] for c in state["challenges"]], [False, False, True])
+        self.assertEqual([c["completed"] for c in state["challenges"]], [False, False, False, False, True])
         self.assertFalse(any(c["completed"] for c in BrowserSession().state()["challenges"]))
 
     def test_invalid_actions_do_not_mutate_session(self):
         for data in [None, [], {}, {"action": 1}, {"action": "unknown"},
                      {"action": "select", "challenge": True}, {"action": "select", "challenge": -1},
-                     {"action": "select", "challenge": 3}, {"action": "next"},
+                     {"action": "select", "challenge": len(CHALLENGES)}, {"action": "next"},
                      {"action": "replay"}, {"action": "submit", "numbers": "[]", "prediction": "0"}]:
             with self.subTest(data=data):
                 before = self.request()[1]
@@ -210,6 +210,7 @@ class BrowserAPITests(unittest.TestCase):
 
         status, body, headers = self.request(path="/")
         self.assertEqual(status, 200)
+        self.assertIn(b"Created by Venkatesh Trivedi", body)
         parser = Scripts()
         parser.feed(body.decode())
         self.assertEqual(parser.scripts, [
@@ -241,9 +242,9 @@ class BrowserAPITests(unittest.TestCase):
         self.cookie = browser_a
         browser_a_state = self.request()[1]
         self.assertEqual(browser_a_state["result"]["outcome"], "success")
-        self.assertEqual([c["hints_used"] for c in browser_a_state["challenges"]], [1, 0, 0])
+        self.assertEqual([c["hints_used"] for c in browser_a_state["challenges"]], [1, 0, 0, 0, 0])
         self.cookie = browser_b_cookie
-        self.assertEqual([c["hints_used"] for c in self.request()[1]["challenges"]], [0, 1, 0])
+        self.assertEqual([c["hints_used"] for c in self.request()[1]["challenges"]], [0, 1, 0, 0, 0])
 
     def test_fresh_backend_restores_cookie_without_process_session(self):
         self.act("select", challenge=2)
@@ -257,8 +258,9 @@ class BrowserAPITests(unittest.TestCase):
             self.assertFalse(hasattr(fresh, "session"))
             self.assertEqual(self.request(server=fresh)[1], expected)
             state = self.request("POST", "/api/action", {"action": "next"}, server=fresh)[1]
-            self.assertEqual(state["view"], "summary")
-            self.assertEqual([c["completed"] for c in state["challenges"]], [False, False, True])
+            self.assertEqual(state["view"], "challenge")
+            self.assertEqual(state["selected"], 3)
+            self.assertEqual([c["completed"] for c in state["challenges"]], [False, False, True, False, False])
         finally:
             fresh.shutdown()
             fresh.server_close()
@@ -280,7 +282,7 @@ class BrowserAPITests(unittest.TestCase):
         self.assertLessEqual(len(token), COOKIE_LIMIT)
         data = decode_session(token, self.server.session_secret)
         self.assertEqual(data["result"], {"numbers": [20, -20]})
-        self.assertEqual(data["hints"], [0, 0, 1])
+        self.assertEqual(data["hints"], [0, 0, 1, 0, 0])
         self.assertEqual(set(data), {"v", "exp", "selected", "view", "hints", "completed", "result"})
         serialized = json.dumps(data)
         for secret_field in ("reference", "expected", "actual", "trace", "explanation", "prediction"):

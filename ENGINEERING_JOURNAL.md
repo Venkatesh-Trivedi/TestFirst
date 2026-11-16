@@ -624,3 +624,36 @@ No browser rendering, deployed page-view network request, Vercel dashboard
 collection, or human user testing was checked for this change. Dashboard
 enablement/deployment and live collection remain operational verification steps;
 ad blockers or unavailable analytics may prevent collection without blocking play.
+
+## 2026-11-16 — Creator credit and two more challenges
+
+Codex added “Created by Venkatesh Trivedi” as the final footer item, using the
+existing footer layout (which stacks on narrow screens). Added two challenges
+through the existing Challenge data structure: sum only positive numbers (the
+buggy loop adds negatives too), and count positive numbers (the buggy comparison
+includes zero). Both reuse the existing 1–8 integer validation, four outcomes,
+optional three hints, explanation, and generic trace viewer. Neither introduces
+submitted-code execution or dependencies. The original three functions are unchanged.
+
+Both browser and terminal menus now offer five challenges. Updated progression,
+summary, invalid-choice, neutral-example, and session assertions for five entries.
+Signed cookies from the original three-challenge version retain their hints and
+completion marks, with two incomplete entries appended in memory. An old valid
+summary returns to the menu; old successful attempts still restore their trace.
+Unrecognized progress lengths and invalid selections continue to reset the session.
+Updated README challenge descriptions and cookie documentation, HTML metadata,
+and an outdated CSS comment. Analytics remains page-view only.
+
+Actual verification: ran `python -m unittest discover -s tests -v` twice and
+`python -m unittest discover -s tests -q` once with loopback access. Each ran 62
+tests. All new challenge, exact trace, exhaustive small-domain, browser progression,
+terminal progression, footer, and legacy-cookie tests passed. Full runs failed
+with respectively 2, 1, and 2 WinError 10053 connection-aborted errors in existing
+HTTP origin/fetch-metadata rejection tests; the failing cases varied across runs.
+No assertion failures occurred. No security checks were disabled or tests skipped.
+`git diff --check` passed with Windows line-ending notices only.
+
+Codex performed implementation, documentation, and the stated checks. No browser
+visual inspection, live Vercel verification, or human user testing was performed
+for this update. The intermittent Windows HTTP rejection-test transport errors
+remain unresolved; this entry does not claim a fully passing test suite.

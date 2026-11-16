@@ -55,7 +55,7 @@ class TerminalTests(unittest.TestCase):
 
     def test_menu_switches_preserve_hints_and_restart_only_selected_game(self):
         output = self.run_game([
-            "", "4", "x", "1", "hint", "menu", "2", "hint",
+            "", "6", "x", "1", "hint", "menu", "2", "hint",
             "[1,3,3]", "1", "replay", "menu", "1", "hint",
             "menu", "2", "hint", "menu", "3", "[2,1]", "1", "menu", "quit",
         ])
@@ -82,19 +82,19 @@ class TerminalTests(unittest.TestCase):
     def test_next_visits_each_challenge_then_shows_summary(self):
         output = self.run_game([
             "1", "[-1]", "-1", "next", "[1,3,3]", "1", "next",
-            "[2,1]", "1", "next",
+            "[2,1]", "1", "next", "[2,-1]", "2", "next", "[0]", "0", "next",
         ])
-        self.assertEqual(output.count("Challenge complete."), 3)
-        self.assertIn("Session summary: 3/3 challenges completed.", output)
-        self.assertEqual(output.count(": complete; hints used: 0/3"), 3)
+        self.assertEqual(output.count("Challenge complete."), 5)
+        self.assertIn("Session summary: 5/5 challenges completed.", output)
+        self.assertEqual(output.count(": complete; hints used: 0/3"), 5)
         self.assertNotIn("not completed", output)
 
     def test_next_after_last_does_not_claim_skipped_challenges_complete(self):
-        output = self.run_game(["3", "hint", "[2,1]", "1", "next"])
-        self.assertIn("Session summary: 1/3 challenges completed.", output)
+        output = self.run_game(["5", "hint", "[0]", "0", "next"])
+        self.assertIn("Session summary: 1/5 challenges completed.", output)
         self.assertIn("Find the largest number: not completed", output)
         self.assertIn("Second-largest DISTINCT number: not completed", output)
-        self.assertIn("Most-frequent number: complete; hints used: 1/3", output)
+        self.assertIn("Count the positive numbers: complete; hints used: 1/3", output)
 
     def test_completion_menu_marks_solved_challenges(self):
         output = self.run_game(["2", "[1,3,3]", "1", "menu", "quit"])
@@ -115,9 +115,9 @@ class TerminalTests(unittest.TestCase):
 
     def test_repeated_success_counts_once_and_session_state_resets(self):
         output = self.run_game([
-            "3", "[2,1]", "1", "replay", "[3,1]", "1", "next",
+            "5", "[0]", "0", "replay", "[0,1]", "1", "next",
         ])
-        self.assertIn("Session summary: 1/3 challenges completed.", output)
+        self.assertIn("Session summary: 1/5 challenges completed.", output)
         self.assertNotIn("[complete]", self.run_game(["quit"]))
 
     def test_eof_and_interrupt_at_completion_and_following_selection(self):

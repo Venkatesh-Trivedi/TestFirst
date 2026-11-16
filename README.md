@@ -36,14 +36,14 @@ environments must allow local socket connections; they are not skipped silently.
 
 ## Playing in the browser
 
-Choose one of the three challenges. Read its specification and the fixed Python
+Choose one of the five challenges. Read its specification and the fixed Python
 program, enter a JSON list and predicted correct integer in the separate fields,
 then select **Test my prediction**. The visible constraints come from the Python
 challenge definition. All validation/evaluation runs in the same engine used by
 the terminal; JavaScript only displays state and formats code.
 
 The example `[1, 2, 3]` demonstrates input syntax without exposing any of the
-three bugs. Feedback distinguishes invalid input, incorrect prediction, a
+five bugs. Feedback distinguishes invalid input, incorrect prediction, a
 correct prediction that leaves the bug hidden, and a successful counterexample.
 Invalid entries stay in the fields. Incorrect predictions reveal neither the
 correct answer nor the program's result, trace, or explanation in the API or UI.
@@ -143,7 +143,7 @@ page-view request, then check Vercel's Web Analytics dashboard for traffic.
 On Vercel the cookie is `Secure`, `HttpOnly`, `SameSite=Strict`, host-only, and
 scoped to `/`. Its value is capped at 2,048 characters (the full header remains
 below the usual 4 KiB cookie budget), HMAC-SHA256 signed, versioned, and time-limited.
-Only selection/view, three hint counts, three completion flags, compact feedback,
+Only selection/view, five hint counts, five completion flags, compact feedback,
 and the last successful input are stored. Hint text, reference answers,
 explanations, predictions, and traces are absent; Python reconstructs successful
 details after validating the signature, expiry, schema, and input. Cookies are
@@ -174,6 +174,8 @@ Choose a challenge from the numbered menu:
 | 1 | Find the largest number | Return the largest integer in a non-empty list. |
 | 2 | Second-largest DISTINCT number | Return the second-largest unique value, ignoring duplicates. Requires at least two distinct integers. |
 | 3 | Most-frequent number | Return the most frequent integer; among equally frequent values, return the smallest. |
+| 4 | Sum the positive numbers | Add only values greater than zero; return 0 if none are positive. |
+| 5 | Count the positive numbers | Count values greater than zero; zero does not count. |
 
 Read the specification and buggy function, enter a JSON list such as `[2, 5, 1]`,
 then enter your predicted correct output as a JSON integer. For this list, the
@@ -242,6 +244,9 @@ code loading or plugin system. The separate tracers must stay aligned with their
 trusted functions; tests check intermediate steps and return values.
 
 Terminal completion marks and hints live only in memory and reset on exit.
+Existing signed cookies from the original three-challenge version retain their
+completion marks and hints; the two new challenges start incomplete. Old session
+summaries reopen the menu so players can discover the new challenges.
 Browser progress lives in the signed cookie and survives fresh backend instances
 when they share the configured signing secret.
 Summary hint counts reflect the current count after any replay/reset, not a
